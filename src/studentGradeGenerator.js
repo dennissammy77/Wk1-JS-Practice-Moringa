@@ -1,5 +1,4 @@
 const prompt = require('prompt-sync')({sigint: true});
-const chalk = require('chalk');
 
 const gradeReportObject = {
     course: '', 
