@@ -1,9 +1,9 @@
 const prompt = require('prompt-sync')({sigint: true});
 
 class salaryCalculator{
-    constructor(basicSalary,benefits,allowances,alternativePensionScheme=false,disabilityExemption=false,insuranceRelief){
+    constructor(basicSalary,benefits,allowances,alternativePensionScheme,disabilityExemption,insuranceRelief){
         this.basicSalary = basicSalary;
-        this.benefits = benefits;
+        this.benefits = benefits === 0? 1080 : benefits;
         this.allowances = allowances;
         this.alternativePensionScheme = alternativePensionScheme;
         this.disabilityExemption = disabilityExemption;
@@ -38,7 +38,7 @@ class salaryCalculator{
         return parseFloat(parseInt(this.basicSalary) + parseInt(this.allowances)).toFixed(2);
     };
     /*Deductions*/
-    NSSFCalculator(alternativePensionScheme){
+    NSSFCalculator(){
         // select tier
         if((this.grossCalculator() <= this.pensionablePayTiers.tier1.max)){
             this.pensionablePay.tier1 = this.grossCalculator() * 0.06; // 6% of gross
@@ -46,10 +46,10 @@ class salaryCalculator{
         if((this.grossCalculator() > this.pensionablePayTiers.tier1.max)){
             this.pensionablePay.tier1 = 480; // 6% of gross
         };
-        if((this.grossCalculator() >= this.pensionablePayTiers.tier2.min) && (this.grossCalculator() <= this.pensionablePayTiers.tier2.max) && !alternativePensionScheme){
+        if((this.grossCalculator() >= this.pensionablePayTiers.tier2.min) && (this.grossCalculator() <= this.pensionablePayTiers.tier2.max) && !this.alternativePensionScheme){
             this.pensionablePay.tier2 = (this.grossCalculator() - this.pensionablePayTiers.tier2.min) * 0.06; // 6% of gross
         };
-        if((this.grossCalculator() > this.pensionablePayTiers.tier2.max) && !alternativePensionScheme){
+        if((this.grossCalculator() > this.pensionablePayTiers.tier2.max) && !this.alternativePensionScheme){
             this.pensionablePay.tier2 = 3840; // 6% of gross
         };
         return parseFloat(parseInt(this.pensionablePay.tier2) + parseInt(this.pensionablePay.tier1)).toFixed(2)
@@ -102,7 +102,7 @@ class salaryCalculator{
         console.log(`NSSF Deduction: KES ${this.NSSFCalculator()}`);
         console.log(`SHIF Deduction: KES ${this.SHIFCalculator()}`);
         console.log(`HOUSING LEVY Deduction: KES 4500`);
-        console.log(`TAXABLE INCOME: KES ${this.taxablePayCalculator()}`);
+        console.log(`TAXABLE PAY: KES ${this.taxablePayCalculator()}`);
         console.log(`PAYE (Tax): KES ${this.payeeTaxCalculator()}`);
         console.log(`Net Salary: KES ${this.netSalaryCalculator()}`);
         console.log("------------------------\n");
@@ -116,9 +116,9 @@ while(true){
     const baseSalary = baseSalaryPrompter();
     const benefits = benefitsPrompter();
     const allowances = allowancesPrompter();
+    const insuranceRelief = insuranceReliefPrompter();
     const alternativePensionScheme = alternativePensionSchemePrompter();
     const disabilityExemption = disabilityExemptionPrompter();
-    const insuranceRelief = insuranceReliefPrompter();
 
     const salary = new salaryCalculator(
         baseSalary,
@@ -140,13 +140,13 @@ function baseSalaryPrompter(){
         baseSalaryPrompter()
     };
     if(isNaN(baseSalary)){
-        console.log('\n Your choice should be a number: ')
+        console.log('\n Your input should be a number: ')
         baseSalaryPrompter()
     }
     return baseSalary;
 }
 function benefitsPrompter(){
-    const benefits = prompt('What are your benefits').trim();
+    const benefits = prompt('What are your benefits  :').trim();
     if(!benefits){
         console.log('\n You did not enter anything: ')
         benefitsPrompter()
@@ -182,16 +182,16 @@ function insuranceReliefPrompter(){
     return insuranceRelief;
 }
 function alternativePensionSchemePrompter(){
-    const alternativePensionScheme = prompt('Do you have a diffenrent pension scheme? Type "Y" for yes or "N" for no  :').trim();
+    const alternativePensionScheme = prompt('Do you have a different pension scheme? Type "Y" for yes or "N" for no  :').trim();
     if(!alternativePensionScheme){
         console.log('\n You did not enter anything: ')
         alternativePensionSchemePrompter()
     };
-    if(alternativePensionScheme.toLowerCase().includes['y','n']){
+    if(alternativePensionScheme.toLowerCase() !== 'n' && alternativePensionScheme.toLowerCase() !== 'y'){
         console.log('\n Your input should be y or n: ')
         alternativePensionSchemePrompter()
     }
-    return alternativePensionScheme;
+    return alternativePensionScheme === 'y'? true : false;
 }
 function disabilityExemptionPrompter(){
     const disabilityExemption = prompt('Do you have a disability excemption certificate? Type "Y" for yes or "N" for no  :').trim();
@@ -199,15 +199,11 @@ function disabilityExemptionPrompter(){
         console.log('\n You did not enter anything: ')
         disabilityExemptionPrompter()
     };
-    if(disabilityExemption.toLowerCase().includes['y','n']){
+    if(disabilityExemption.toLowerCase() !== 'n' && disabilityExemption.toLowerCase() !== 'y'){
         console.log('\n Your input should be y or n: ')
         disabilityExemptionPrompter()
     }
-    if(disabilityExemption === 'y'){
-        return true;
-    }else{
-        return false;
-    }
+    return disabilityExemption === 'y'? true : false;
 }
 function PayELowBand(taxableIncome,rateTax){
     if(taxableIncome <=rateTax["10"]["max"]) {
